@@ -1,0 +1,33 @@
+[package]
+name = "follow-cleaner"
+version = "0.1.0"
+description = "FollowCleaner 关注管家 —— 多平台关注列表分类与批量清理工具"
+authors = ["FollowCleaner Contributors"]
+edition = "2021"
+rust-version = "1.77"
+
+[lib]
+# Tauri 2 约定：核心逻辑在 lib crate，main 仅入口
+name = "follow_cleaner_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+thiserror = "1"
+uuid = { version = "1", features = ["v4"] }
+chrono = "0.4"
+csv = "1"
+log = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

@@ -6,7 +6,6 @@ src-tauri/target/
 src-tauri/gen/
 src-tauri/WixTools/
 src-tauri/.cargo/
-
 # ---------- Node / Frontend ----------
 node_modules/
 dist/

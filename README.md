@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS-blue)]()
-[![Status](https://img.shields.io/badge/status-planning-lightgrey)]()
+[![Status](https://img.shields.io/badge/status-V0.1%20MVP-brightgreen)]()
 
 ---
 
@@ -52,13 +52,28 @@ FollowCleaner 用"平台适配器（Platform Adapter）"架构把各平台差异
 
 | 平台 | 关注列表导入 | 互动数据 | 取消关注 | 状态 |
 |------|:-----------:|:-------:|:-------:|------|
-| 手动导入（CSV/JSON，全平台通用） | ✅ | ✅ | — | 🟡 规划中（MVP） |
-| 哔哩哔哩 | 🔄 | 🔄 | 🔄 | ⏳ 规划中 |
-| 小红书 | 🔄 | 🔄 | 🔄 | ⏳ 规划中 |
-| 微信（公众号/视频号） | 🔄 | 🔄 | 🔄 | ⏳ 规划中（高级功能） |
+| 手动导入（CSV/JSON，全平台通用） | ✅ | ✅ | — | 🟢 V0.1 已实现 |
+| 哔哩哔哩 | 🔄 | 🔄 | 🔄 | ⏳ V0.5 规划 |
+| 小红书 | 🔄 | 🔄 | 🔄 | ⏳ V1.0 规划 |
+| 微信（公众号/视频号） | 🔄 | 🔄 | 🔄 | ⏳ V1.1 规划（高级功能） |
 | 微博 / 知乎 / 抖音 / … | ⬜ | ⬜ | ⬜ | 🔮 未来（适配器扩展） |
 
 图例：✅ 已支持　🔄 规划支持　⬜ 未开始
+
+## 快速开始（V0.1 开发版）
+
+环境要求：Node.js ≥ 18、pnpm、[Rust](https://rustup.rs)（stable）、Windows 需 WebView2（Win11 自带）。
+
+```bash
+pnpm install        # 安装前端依赖
+pnpm tauri dev      # 启动桌面应用（首次会编译 Rust，需数分钟）
+```
+
+快速体验：应用内点击「导入关注列表」→ 下载模板，或直接导入仓库自带的
+[examples/sample-follows.csv](./examples/sample-follows.csv) 示例数据，
+即可体验分类树、多维筛选、批量分配、导出等全部 V0.1 功能。
+
+> 数据全部保存在本机应用数据目录（`followcleaner.db`），不上传任何服务器。
 
 ## 项目文档（产品视角）
 
@@ -74,7 +89,9 @@ FollowCleaner 用"平台适配器（Platform Adapter）"架构把各平台差异
 
 ## 当前状态与贡献
 
-项目处于**产品规划阶段**，代码骨架尚未搭建。欢迎通过 Issue 讨论需求、提交 PR 或认领适配器开发。
+**V0.1 MVP「整理盒」已完成**：手动导入（CSV/JSON 模板 + 校验 + 去重）、多级分类树（拖拽排序/5 级上限）、多维筛选与搜索、批量分配分类、数据导出、本地 SQLite 加密存储。
+
+后续路线：V0.5 B站适配器 + 仪表盘 → V1.0 小红书 + 批量取关闭环 → V1.1 微信高级模式。欢迎通过 Issue 讨论需求、提交 PR 或认领适配器开发。
 
 开发路线图见 [docs/backlog-roadmap.md](./docs/backlog-roadmap.md)。
 
