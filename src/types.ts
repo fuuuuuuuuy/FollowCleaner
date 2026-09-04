@@ -90,3 +90,35 @@ export interface IpcError {
   code: string;
   message: string;
 }
+
+// ---- B站适配器 ----
+export interface BiliQrStart {
+  qrcodeKey: string;
+  url: string;
+}
+
+export interface BiliQrPoll {
+  status: "waiting" | "scanned" | "expired" | "success";
+  uname: string | null;
+}
+
+export interface BiliStatus {
+  loggedIn: boolean;
+  uname: string | null;
+}
+
+export interface BiliFetchResult {
+  total: number;
+  accounts: NormalizedAccount[];
+}
+
+export interface UnfollowProgress {
+  total: number;
+  done: number;
+  mid: string;
+  displayName: string;
+  success: boolean;
+  message: string;
+  finished: boolean;
+  stopped: boolean;
+}

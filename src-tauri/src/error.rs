@@ -40,6 +40,10 @@ pub enum AppError {
     #[error("不支持的文件格式: {0}（仅支持 .csv / .json）")]
     #[serde(rename = "UNSUPPORTED_FORMAT")]
     UnsupportedFormat(String),
+
+    #[error("网络请求失败: {0}")]
+    #[serde(rename = "NETWORK_ERROR")]
+    Network(String),
 }
 
 impl From<rusqlite::Error> for AppError {
@@ -64,6 +68,13 @@ impl From<serde_json::Error> for AppError {
 impl From<std::io::Error> for AppError {
     fn from(e: std::io::Error) -> Self {
         AppError::File(e.to_string())
+    }
+}
+
+impl From<reqwest::Error> for AppError {
+    fn from(e: reqwest::Error) -> Self {
+        log::error!("reqwest error: {e}");
+        AppError::Network(e.to_string())
     }
 }
 

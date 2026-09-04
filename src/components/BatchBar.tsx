@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Button, Space, message, Dropdown } from "antd";
+import { Button, Space, message, Dropdown, Tooltip } from "antd";
 import {
   FolderOpenOutlined,
   ExportOutlined,
   CloseOutlined,
   CheckSquareOutlined,
+  DisconnectOutlined,
 } from "@ant-design/icons";
 import { save } from "@tauri-apps/plugin-dialog";
 import { useStore } from "@/stores/data";
@@ -16,9 +17,33 @@ export default function BatchBar() {
   const selectAllFiltered = useStore((s) => s.selectAllFiltered);
   const clearSelection = useStore((s) => s.clearSelection);
   const setAssignOpen = useStore((s) => s.setAssignOpen);
+  const setUnfollowOpen = useStore((s) => s.setUnfollowOpen);
+  const biliLoggedIn = useStore((s) => s.biliLoggedIn);
+  const setConnectOpen = useStore((s) => s.setConnectOpen);
   const [busy, setBusy] = useState(false);
 
   if (selectedIds.length === 0) return null;
+
+  // 选中账号中可自动取关的（B站且在关注中）
+  const unfollowable = accounts.filter(
+    (a) =>
+      selectedIds.includes(a.id) &&
+      a.platform === "bilibili" &&
+      a.status === "following",
+  );
+
+  const onUnfollowClick = () => {
+    if (!biliLoggedIn) {
+      message.info("请先点击右上角「接入B站账号」扫码登录");
+      setConnectOpen(true);
+      return;
+    }
+    if (unfollowable.length === 0) {
+      message.info("选中的账号中没有可自动取关的B站账号（其他平台将在后续版本支持）");
+      return;
+    }
+    setUnfollowOpen(true);
+  };
 
   const doExport = async (format: "csv" | "json", scope: "selected" | "all") => {
     const ext = format;
@@ -68,6 +93,22 @@ export default function BatchBar() {
         >
           分配分类
         </Button>
+        <Tooltip
+          title={
+            unfollowable.length > 0
+              ? `对 ${unfollowable.length} 个B站账号执行取关（3~8秒/个）`
+              : "仅支持哔哩哔哩账号；微信/小红书等平台适配器在后续版本"
+          }
+        >
+          <Button
+            size="small"
+            danger
+            icon={<DisconnectOutlined />}
+            onClick={onUnfollowClick}
+          >
+            批量取关{unfollowable.length > 0 ? `(${unfollowable.length})` : ""}
+          </Button>
+        </Tooltip>
         <Dropdown menu={{ items: exportMenu }}>
           <Button size="small" icon={<ExportOutlined />} loading={busy}>
             导出

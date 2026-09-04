@@ -39,6 +39,13 @@ pub fn run() {
             features::importx::commit_import,
             features::importx::write_template,
             features::importx::export_accounts,
+            // 平台适配器
+            features::adapters::bilibili::bilibili_qr_generate,
+            features::adapters::bilibili::bilibili_qr_poll,
+            features::adapters::bilibili::bilibili_status,
+            features::adapters::bilibili::bilibili_logout,
+            features::adapters::bilibili::bilibili_fetch_follows,
+            features::adapters::bilibili::bilibili_unfollow_batch,
         ])
         .run(tauri::generate_context!())
         .expect("FollowCleaner 启动失败");

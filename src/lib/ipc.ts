@@ -1,12 +1,18 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 import type {
   AccountFilter,
   AccountWithCategories,
+  BiliFetchResult,
+  BiliQrPoll,
+  BiliQrStart,
+  BiliStatus,
   Category,
   ImportResult,
   NormalizedAccount,
   OverviewCounts,
   ParseResult,
+  UnfollowProgress,
 } from "@/types";
 
 /**
@@ -58,4 +64,18 @@ export const api = {
     call<void>("write_template", { path, format }),
   exportAccounts: (path: string, format: string, accountIds: string[] | null) =>
     call<number>("export_accounts", { path, format, accountIds }),
+
+  // ---- B站适配器 ----
+  biliQrGenerate: () => call<BiliQrStart>("bilibili_qr_generate"),
+  biliQrPoll: (qrcodeKey: string) =>
+    call<BiliQrPoll>("bilibili_qr_poll", { qrcodeKey }),
+  biliStatus: () => call<BiliStatus>("bilibili_status"),
+  biliLogout: () => call<void>("bilibili_logout"),
+  biliFetchFollows: () => call<BiliFetchResult>("bilibili_fetch_follows"),
+  biliUnfollowBatch: (mids: string[]) =>
+    call<void>("bilibili_unfollow_batch", { mids }),
+
+  /** 订阅取关进度事件；返回取消监听函数 */
+  onUnfollowProgress: (handler: (p: UnfollowProgress) => void) =>
+    listen<UnfollowProgress>("unfollow-progress", (e) => handler(e.payload)),
 };

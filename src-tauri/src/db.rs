@@ -51,6 +51,16 @@ const MIGRATIONS: &[&str] = &[
     CREATE INDEX idx_accounts_name         ON accounts(display_name);
     CREATE INDEX idx_ac_category           ON account_categories(category_id);
     "#,
+    // ---- v2: 平台会话凭证（L2 网页登录方式；仅存本机） ----
+    r#"
+    CREATE TABLE credentials (
+      platform     TEXT PRIMARY KEY,
+      cookie_json  TEXT NOT NULL,
+      account_name TEXT,
+      created_at   INTEGER NOT NULL,
+      updated_at   INTEGER NOT NULL
+    );
+    "#,
 ];
 
 /// 打开（必要时创建）数据库并执行未应用的迁移

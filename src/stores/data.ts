@@ -41,6 +41,12 @@ interface DataState {
   // 弹窗
   importOpen: boolean;
   assignOpen: boolean;
+  connectOpen: boolean;
+  unfollowOpen: boolean;
+
+  // B站会话
+  biliLoggedIn: boolean;
+  biliUname: string | null;
 
   // 动作
   init: () => Promise<void>;
@@ -54,6 +60,11 @@ interface DataState {
   setDetail: (id: string | null) => void;
   setImportOpen: (open: boolean) => void;
   setAssignOpen: (open: boolean) => void;
+  setConnectOpen: (open: boolean) => void;
+  setUnfollowOpen: (open: boolean) => void;
+  checkBiliStatus: () => Promise<void>;
+  biliLogout: () => Promise<void>;
+  fetchBiliAndImport: () => Promise<ImportResult>;
 
   createCategory: (name: string, parentId: string | null) => Promise<void>;
   renameCategory: (id: string, name: string) => Promise<void>;
@@ -108,11 +119,19 @@ export const useStore = create<DataState>((set, get) => ({
   detailId: null,
   importOpen: false,
   assignOpen: false,
+  connectOpen: false,
+  unfollowOpen: false,
+  biliLoggedIn: false,
+  biliUname: null,
 
   init: async () => {
     set({ loading: true, error: null });
     try {
-      await Promise.all([get().refreshCategories(), get().refreshOverview()]);
+      await Promise.all([
+        get().refreshCategories(),
+        get().refreshOverview(),
+        get().checkBiliStatus(),
+      ]);
       await get().refreshAccounts();
     } catch (e) {
       set({ error: (e as Error).message });
@@ -170,6 +189,28 @@ export const useStore = create<DataState>((set, get) => ({
   setDetail: (id) => set({ detailId: id }),
   setImportOpen: (open) => set({ importOpen: open }),
   setAssignOpen: (open) => set({ assignOpen: open }),
+  setConnectOpen: (open) => set({ connectOpen: open }),
+  setUnfollowOpen: (open) => set({ unfollowOpen: open }),
+
+  checkBiliStatus: async () => {
+    try {
+      const st = await api.biliStatus();
+      set({ biliLoggedIn: st.loggedIn, biliUname: st.uname });
+    } catch {
+      // 桌面外环境静默
+    }
+  },
+
+  biliLogout: async () => {
+    await api.biliLogout();
+    set({ biliLoggedIn: false, biliUname: null });
+  },
+
+  fetchBiliAndImport: async () => {
+    const fetched = await api.biliFetchFollows();
+    const result = await get().commitImport(fetched.accounts);
+    return result;
+  },
 
   createCategory: async (name, parentId) => {
     await api.createCategory(name, parentId);
