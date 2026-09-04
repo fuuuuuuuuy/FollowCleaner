@@ -5,6 +5,7 @@
 #![allow(dead_code)]
 
 pub mod bilibili;
+pub mod http_util;
 
 /// 平台适配器能力标识（供前端决定 UI 可用性）
 /// 未来新增平台时在此模块扩展即可，不影响核心代码

@@ -74,7 +74,9 @@ impl From<std::io::Error> for AppError {
 impl From<reqwest::Error> for AppError {
     fn from(e: reqwest::Error) -> Self {
         log::error!("reqwest error: {e}");
-        AppError::Network(e.to_string())
+        AppError::Network(format!(
+            "{e}（网络连接失败：若你平时使用 Clash/代理 或处于公司/校园网络，请确认代理软件已开启系统代理后重试）"
+        ))
     }
 }
 

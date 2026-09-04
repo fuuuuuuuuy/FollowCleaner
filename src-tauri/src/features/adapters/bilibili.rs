@@ -3,6 +3,7 @@
 // 合规：用户仅操作自己账号；会话不离开本机；取关限速 + 风控熔断
 use crate::db::DbState;
 use crate::error::{AppError, AppResult};
+use crate::features::adapters::http_util::build_client;
 use crate::models::NormalizedAccount;
 use rand::Rng;
 use serde::{Deserialize, Serialize};
@@ -11,7 +12,6 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, State};
 
 const PLATFORM: &str = "bilibili";
-const UA: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Credentials {
@@ -64,11 +64,7 @@ pub struct UnfollowProgress {
 }
 
 fn http() -> reqwest::Client {
-    reqwest::Client::builder()
-        .user_agent(UA)
-        .timeout(Duration::from_secs(20))
-        .build()
-        .expect("build http client")
+    build_client()
 }
 
 fn creds_cookie(c: &Credentials) -> String {
