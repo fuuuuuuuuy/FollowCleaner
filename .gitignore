@@ -1,0 +1,58 @@
+# ---------- Rust / Tauri ----------
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+src-tauri/target/
+src-tauri/gen/
+src-tauri/WixTools/
+src-tauri/.cargo/
+
+# ---------- Node / Frontend ----------
+node_modules/
+dist/
+dist-ssr/
+.pnp
+.pnp.js
+*.local
+.vite/
+.turbo/
+coverage/
+
+# ---------- IDE / Editor ----------
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# ---------- Trae / AI 工具本地目录 ----------
+.trae/
+
+# ---------- OS ----------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ---------- 日志与本地运行时数据（含用户隐私，禁止入库） ----------
+*.log
+logs/
+*.db
+*.sqlite
+*.sqlite3
+data/
+.tmp/
+tmp/
+
+# ---------- 环境变量 / 密钥 ----------
+.env
+.env.*
+!.env.example
+
+# ---------- 构建产物 ----------
+/release/
+/build/
+*.exe
+*.dmg
+*.AppImage
+*.msi
