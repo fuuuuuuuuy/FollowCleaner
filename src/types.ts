@@ -131,7 +131,7 @@ export interface KeywordRule {
   keywords: string[];
 }
 
-export type AutoRuleType = "verifyType" | "followAge" | "keywords";
+export type AutoRuleType = "smart" | "verifyType" | "followAge" | "keywords";
 
 export interface AutoCategorizeArgs {
   ruleType: AutoRuleType;

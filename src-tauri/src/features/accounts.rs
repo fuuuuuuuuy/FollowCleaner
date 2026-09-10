@@ -88,6 +88,48 @@ fn build_where(filter: &AccountFilter) -> (String, Vec<Box<dyn rusqlite::ToSql>>
         sql.push_str(" AND followed_at IS NOT NULL AND followed_at <= ?");
         p.push(Box::new(t));
     }
+    // 关注时长档位：多选时各档 OR 组合，再与其他条件 AND
+    if !filter.follow_age_buckets.is_empty() {
+        let now = chrono::Utc::now().timestamp();
+        let day = 86_400i64;
+        // 档位 -> [下界(含), 上界(不含))；None 表示该侧不设限
+        let ranges: Vec<(Option<i64>, Option<i64>)> = filter
+            .follow_age_buckets
+            .iter()
+            .filter_map(|b| match b.as_str() {
+                "6m" => Some((Some(now - 180 * day), Some(now + 1))),
+                "6-12m" => Some((Some(now - 365 * day), Some(now - 180 * day))),
+                "1-3y" => Some((Some(now - 3 * 365 * day), Some(now - 365 * day))),
+                "3y+" => Some((None, Some(now - 3 * 365 * day))),
+                _ => None,
+            })
+            .collect();
+        if !ranges.is_empty() {
+            let mut conds = Vec::new();
+            for (lo, hi) in &ranges {
+                let mut c = String::new();
+                if let Some(l) = lo {
+                    c.push_str("followed_at >= ?");
+                    p.push(Box::new(*l));
+                }
+                if let Some(h) = hi {
+                    if !c.is_empty() {
+                        c.push_str(" AND ");
+                    }
+                    c.push_str("followed_at < ?");
+                    p.push(Box::new(*h));
+                }
+                if c.is_empty() {
+                    c.push_str("1=1");
+                }
+                conds.push(c);
+            }
+            sql.push_str(&format!(
+                " AND followed_at IS NOT NULL AND ({})",
+                conds.join(" OR ")
+            ));
+        }
+    }
     if let Some(cid) = &filter.category_id {
         sql.push_str(
             " AND EXISTS (SELECT 1 FROM account_categories ac WHERE ac.account_id = accounts.id AND ac.category_id = ?)",

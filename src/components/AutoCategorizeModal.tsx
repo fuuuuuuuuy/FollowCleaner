@@ -36,7 +36,7 @@ export default function AutoCategorizeModal() {
   const refreshAccounts = useStore((s) => s.refreshAccounts);
   const refreshOverview = useStore((s) => s.refreshOverview);
 
-  const [ruleType, setRuleType] = useState<AutoRuleType>("verifyType");
+  const [ruleType, setRuleType] = useState<AutoRuleType>("smart");
   const [rows, setRows] = useState<RuleRow[]>([
     { key: 1, categoryName: "技术教程", keywordsText: "编程, 开发, 教程" },
   ]);

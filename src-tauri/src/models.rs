@@ -56,6 +56,8 @@ pub struct AccountFilter {
     pub statuses: Vec<String>,
     pub followed_after: Option<i64>,
     pub followed_before: Option<i64>,
+    /// 关注时长档位（可多选，OR 组合）：6m | 6-12m | 1-3y | 3y+
+    pub follow_age_buckets: Vec<String>,
     pub category_id: Option<String>,
     pub uncategorized: Option<bool>,
     /// followed_at | interaction | name | imported_at

@@ -15,6 +15,12 @@ const TYPE_OPTIONS = Object.entries(ACCOUNT_TYPE_LABELS).map(([v, l]) => ({
   value: v,
   label: l,
 }));
+const AGE_OPTIONS = [
+  { value: "6m", label: "6个月内关注" },
+  { value: "6-12m", label: "6~12个月前关注" },
+  { value: "1-3y", label: "1~3年前关注" },
+  { value: "3y+", label: "3年前关注" },
+];
 
 export default function FilterBar() {
   const s = useStore();
@@ -72,6 +78,16 @@ export default function FilterBar() {
           options={TYPE_OPTIONS}
           value={s.accountTypes}
           onChange={(v) => s.setFilter({ accountTypes: v })}
+          maxTagCount="responsive"
+        />
+        <Select
+          mode="multiple"
+          allowClear
+          placeholder="关注时长"
+          style={{ minWidth: 170 }}
+          options={AGE_OPTIONS}
+          value={s.followAgeBuckets}
+          onChange={(v) => s.setFilter({ followAgeBuckets: v })}
           maxTagCount="responsive"
         />
         <Segmented

@@ -29,6 +29,7 @@ interface DataState {
   platforms: string[];
   interactionLevels: string[];
   accountTypes: string[];
+  followAgeBuckets: string[]; // 6m | 6-12m | 1-3y | 3y+（可多选，与其他条件叠加）
   categoryId: string; // ALL_ID | UNCATEGORIZED_ID | 真实分类 id
   quickFilter: "all" | "silent" | "dormant"; // 全部 / 零互动 / 沉睡(零互动+关注超1年)
   sort: string;
@@ -54,7 +55,7 @@ interface DataState {
   refreshCategories: () => Promise<void>;
   refreshAccounts: () => Promise<void>;
   refreshOverview: () => Promise<void>;
-  setFilter: (patch: Partial<Pick<DataState, "search" | "platforms" | "interactionLevels" | "accountTypes" | "categoryId" | "quickFilter" | "sort" | "order">>) => void;
+  setFilter: (patch: Partial<Pick<DataState, "search" | "platforms" | "interactionLevels" | "accountTypes" | "followAgeBuckets" | "categoryId" | "quickFilter" | "sort" | "order">>) => void;
   toggleSelect: (id: string) => void;
   selectAllFiltered: () => void;
   clearSelection: () => void;
@@ -112,6 +113,7 @@ export const useStore = create<DataState>((set, get) => ({
   platforms: [],
   interactionLevels: [],
   accountTypes: [],
+  followAgeBuckets: [],
   categoryId: ALL_ID,
   quickFilter: "all",
   sort: "followed_at",
