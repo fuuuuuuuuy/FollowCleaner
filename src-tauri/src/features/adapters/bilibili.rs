@@ -128,6 +128,45 @@ async fn verify_login(client: &reqwest::Client, c: &Credentials) -> AppResult<(b
 
 // ---------- 命令：扫码登录 ----------
 
+/// 从回调 url 的 query 提取凭证（SESSDATA / bili_jct / DedeUserID）
+fn creds_from_url(url: &str) -> Option<(String, String, String)> {
+    if url.is_empty() {
+        return None;
+    }
+    let parsed = url::Url::parse(url).ok()?;
+    let q = parsed.query_pairs();
+    let get = |k: &str| {
+        q.clone()
+            .find(|(key, _)| key == k)
+            .map(|(_, val)| val.to_string())
+            .unwrap_or_default()
+    };
+    let sessdata = get("SESSDATA");
+    let bili_jct = get("bili_jct");
+    let dede_user_id = get("DedeUserID");
+    (!sessdata.is_empty() && !bili_jct.is_empty()).then_some((sessdata, bili_jct, dede_user_id))
+}
+
+/// 从响应头 Set-Cookie 提取凭证（兜底通道）
+fn creds_from_cookies(cookies: &[String]) -> Option<(String, String, String)> {
+    let mut sessdata = String::new();
+    let mut bili_jct = String::new();
+    let mut dede_user_id = String::new();
+    for c in cookies {
+        if let Some((name, val)) = c.split_once('=') {
+            // cookie 形如 "SESSDATA=xxx%2Cyyy; Path=/; ..."，取分号前的值
+            let val = val.split(';').next().unwrap_or(val);
+            match name.trim() {
+                "SESSDATA" => sessdata = val.to_string(),
+                "bili_jct" => bili_jct = val.to_string(),
+                "DedeUserID" => dede_user_id = val.to_string(),
+                _ => {}
+            }
+        }
+    }
+    (!sessdata.is_empty() && !bili_jct.is_empty()).then_some((sessdata, bili_jct, dede_user_id))
+}
+
 #[tauri::command]
 pub async fn bilibili_qr_generate() -> AppResult<QrStart> {
     let client = http();
@@ -157,13 +196,19 @@ pub async fn bilibili_qr_poll(
     qrcode_key: String,
 ) -> AppResult<QrPoll> {
     let client = http();
-    let v: Value = client
+    let resp = client
         .get("https://passport.bilibili.com/x/passport-login/web/qrcode/poll")
         .query(&[("qrcode_key", qrcode_key.as_str())])
         .send()
-        .await?
-        .json()
         .await?;
+    // 扫码确认成功时，B站会在响应头 Set-Cookie 种登录凭证——先抓取作为兜底来源
+    let set_cookies: Vec<String> = resp
+        .headers()
+        .get_all(reqwest::header::SET_COOKIE)
+        .iter()
+        .filter_map(|v| v.to_str().ok().map(str::to_string))
+        .collect();
+    let v: Value = resp.json().await?;
     // 外层 code 非 0 = 平台级错误（如 -412 风控拦截），此时 data 为空，必须先判外层
     let outer = v["code"].as_i64().unwrap_or(0);
     if outer != 0 {
@@ -196,23 +241,34 @@ pub async fn bilibili_qr_poll(
             message: api_msg,
         }),
         0 => {
-            // 成功：回调 url 的 query 中携带 SESSDATA / bili_jct / DedeUserID
+            // 扫码确认成功。凭证提取双通道：
+            //   1) 回调 url 的 query（SESSDATA / bili_jct / DedeUserID）
+            //   2) 响应头 Set-Cookie（B站部分版本/场景 url 不带凭证）
             let url = v["data"]["url"].as_str().unwrap_or_default();
-            let parsed = url::Url::parse(url)
-                .map_err(|_| AppError::Validation("登录回包解析失败".into()))?;
-            let q = parsed.query_pairs();
-            let get = |k: &str| {
-                q.clone()
-                    .find(|(key, _)| key == k)
-                    .map(|(_, val)| val.to_string())
-                    .unwrap_or_default()
-            };
-            let sessdata = get("SESSDATA");
-            let bili_jct = get("bili_jct");
-            let dede_user_id = get("DedeUserID");
+            log::info!(
+                "bilibili poll success: url_len={} set_cookie_names={:?}",
+                url.len(),
+                set_cookies
+                    .iter()
+                    .map(|c| c.split('=').next().unwrap_or("?"))
+                    .collect::<Vec<_>>()
+            );
+            let (sessdata, bili_jct, dede_user_id) = creds_from_url(url)
+                .or_else(|| creds_from_cookies(&set_cookies))
+                .unwrap_or_default();
             if sessdata.is_empty() || bili_jct.is_empty() {
+                // 脱敏记录：cookie 名单与长度，绝不记录凭证值
+                log::error!(
+                    "bilibili login: 凭证提取失败 url_len={} cookies={:?} data={}",
+                    url.len(),
+                    set_cookies
+                        .iter()
+                        .map(|c| c.split('=').next().unwrap_or("?"))
+                        .collect::<Vec<_>>(),
+                    v["data"]
+                );
                 return Err(AppError::Validation(
-                    "登录成功但未获取到会话凭证，请重试".into(),
+                    "登录成功但未获取到会话凭证（已记录详情），请重试".into(),
                 ));
             }
             let mut creds = Credentials {

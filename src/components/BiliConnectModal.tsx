@@ -108,8 +108,15 @@ export default function BiliConnectModal() {
           await doFetch();
         }
       } catch (e) {
+        const msg = (e as Error).message;
         errStreak += 1;
-        setPollError((e as Error).message);
+        setPollError(msg);
+        // 登录数据处理失败：二维码 key 已被消费，继续轮询只会得到"已失效"的误导，立即停止
+        if (msg.includes("登录") || msg.includes("凭证") || msg.includes("会话")) {
+          stopPoll();
+          setPollState("error");
+          return;
+        }
         if (errStreak >= 3) {
           // 连续 3 次轮询失败：如实展示网络/接口错误，让用户重试
           stopPoll();
