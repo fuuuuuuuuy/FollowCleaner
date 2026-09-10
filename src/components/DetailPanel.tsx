@@ -141,8 +141,8 @@ export default function DetailPanel() {
         style={{ marginTop: 20 }}
         type="info"
         showIcon
-        message="取消关注功能将在 V1.0 开放"
-        description="V0.1 为手动导入数据，工具无法代你操作平台账号；批量取关、限速与回收站兜底将在 V1.0 随平台适配器上线。"
+        message="想清理这个账号？"
+        description="在列表中勾选账号后，点击底部工具栏的「批量取关」即可（当前支持哔哩哔哩，执行前有确认，限速 3~8 秒/个）。"
       />
     </Drawer>
   );

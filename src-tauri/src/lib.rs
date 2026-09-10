@@ -50,6 +50,8 @@ pub fn run() {
             features::adapters::bilibili::bilibili_logout,
             features::adapters::bilibili::bilibili_fetch_follows,
             features::adapters::bilibili::bilibili_unfollow_batch,
+            // 自动分类
+            features::autocat::auto_categorize,
         ])
         .run(tauri::generate_context!())
         .expect("FollowCleaner 启动失败");

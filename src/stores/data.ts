@@ -43,6 +43,7 @@ interface DataState {
   assignOpen: boolean;
   connectOpen: boolean;
   unfollowOpen: boolean;
+  autoOpen: boolean;
 
   // B站会话
   biliLoggedIn: boolean;
@@ -62,6 +63,7 @@ interface DataState {
   setAssignOpen: (open: boolean) => void;
   setConnectOpen: (open: boolean) => void;
   setUnfollowOpen: (open: boolean) => void;
+  setAutoOpen: (open: boolean) => void;
   checkBiliStatus: () => Promise<void>;
   biliLogout: () => Promise<void>;
   fetchBiliAndImport: () => Promise<ImportResult>;
@@ -121,6 +123,7 @@ export const useStore = create<DataState>((set, get) => ({
   assignOpen: false,
   connectOpen: false,
   unfollowOpen: false,
+  autoOpen: false,
   biliLoggedIn: false,
   biliUname: null,
 
@@ -191,6 +194,7 @@ export const useStore = create<DataState>((set, get) => ({
   setAssignOpen: (open) => set({ assignOpen: open }),
   setConnectOpen: (open) => set({ connectOpen: open }),
   setUnfollowOpen: (open) => set({ unfollowOpen: open }),
+  setAutoOpen: (open) => set({ autoOpen: open }),
 
   checkBiliStatus: async () => {
     try {

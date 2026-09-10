@@ -3,6 +3,8 @@ import { listen } from "@tauri-apps/api/event";
 import type {
   AccountFilter,
   AccountWithCategories,
+  AutoCategorizeArgs,
+  AutoCategorizeResult,
   BiliFetchResult,
   BiliQrPoll,
   BiliQrStart,
@@ -78,4 +80,8 @@ export const api = {
   /** 订阅取关进度事件；返回取消监听函数 */
   onUnfollowProgress: (handler: (p: UnfollowProgress) => void) =>
     listen<UnfollowProgress>("unfollow-progress", (e) => handler(e.payload)),
+
+  // ---- 自动分类 ----
+  autoCategorize: (args: AutoCategorizeArgs) =>
+    call<AutoCategorizeResult>("auto_categorize", { args }),
 };

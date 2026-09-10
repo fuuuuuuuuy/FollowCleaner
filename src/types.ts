@@ -124,3 +124,28 @@ export interface UnfollowProgress {
   finished: boolean;
   stopped: boolean;
 }
+
+// ---- 自动分类 ----
+export interface KeywordRule {
+  categoryName: string;
+  keywords: string[];
+}
+
+export type AutoRuleType = "verifyType" | "followAge" | "keywords";
+
+export interface AutoCategorizeArgs {
+  ruleType: AutoRuleType;
+  keywordRules?: KeywordRule[] | null;
+  dryRun: boolean;
+}
+
+export interface AutoCategorizeGroup {
+  categoryName: string;
+  count: number;
+}
+
+export interface AutoCategorizeResult {
+  groups: AutoCategorizeGroup[];
+  totalAssigned: number;
+  dryRun: boolean;
+}

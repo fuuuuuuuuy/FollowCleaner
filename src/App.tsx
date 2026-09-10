@@ -5,6 +5,7 @@ import {
   ClearOutlined,
   ApiOutlined,
   LogoutOutlined,
+  ThunderboltOutlined,
 } from "@ant-design/icons";
 import { useStore } from "@/stores/data";
 import CategoryTree from "@/components/CategoryTree";
@@ -16,6 +17,7 @@ import ImportModal from "@/components/ImportModal";
 import AssignCategoryModal from "@/components/AssignCategoryModal";
 import BiliConnectModal from "@/components/BiliConnectModal";
 import UnfollowModal from "@/components/UnfollowModal";
+import AutoCategorizeModal from "@/components/AutoCategorizeModal";
 import { Modal } from "antd";
 
 const { Header, Sider, Content } = Layout;
@@ -28,6 +30,7 @@ export default function App() {
   const setImportOpen = useStore((s) => s.setImportOpen);
   const setFilter = useStore((s) => s.setFilter);
   const setConnectOpen = useStore((s) => s.setConnectOpen);
+  const setAutoOpen = useStore((s) => s.setAutoOpen);
   const biliLoggedIn = useStore((s) => s.biliLoggedIn);
   const biliUname = useStore((s) => s.biliUname);
   const biliLogout = useStore((s) => s.biliLogout);
@@ -43,7 +46,7 @@ export default function App() {
         <div className="app-brand">
           <ClearOutlined /> FollowCleaner <span className="app-brand-sub">关注管家</span>
           <Tag color="default" style={{ marginLeft: 8 }}>
-            v0.1
+            v0.6
           </Tag>
         </div>
         <div className="app-stats">
@@ -90,6 +93,12 @@ export default function App() {
               同步关注
             </Button>
           )}
+          <Button
+            icon={<ThunderboltOutlined />}
+            onClick={() => setAutoOpen(true)}
+          >
+            自动分类
+          </Button>
           <Button
             type="primary"
             icon={<ImportOutlined />}
@@ -142,6 +151,7 @@ export default function App() {
       <AssignCategoryModal />
       <BiliConnectModal />
       <UnfollowModal />
+      <AutoCategorizeModal />
       {contextHolder}
     </Layout>
   );
