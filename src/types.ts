@@ -100,6 +100,8 @@ export interface BiliQrStart {
 export interface BiliQrPoll {
   status: "waiting" | "scanned" | "expired" | "success";
   uname: string | null;
+  /** 平台原始提示（如"二维码已失效"） */
+  message: string | null;
 }
 
 export interface BiliStatus {

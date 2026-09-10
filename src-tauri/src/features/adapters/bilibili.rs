@@ -34,6 +34,8 @@ pub struct QrPoll {
     /// waiting（未扫码）| scanned（已扫码待确认）| expired（过期）| success（登录成功）
     pub status: String,
     pub uname: Option<String>,
+    /// 平台原始提示（如"二维码已失效"），用于前端如实展示失败原因
+    pub message: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -141,11 +143,10 @@ pub async fn bilibili_qr_generate() -> AppResult<QrStart> {
             v["message"].as_str().unwrap_or("未知错误")
         )));
     }
+    let key = v["data"]["qrcode_key"].as_str().unwrap_or_default().to_string();
+    log::info!("bilibili qr generated, key={key}");
     Ok(QrStart {
-        qrcode_key: v["data"]["qrcode_key"]
-            .as_str()
-            .unwrap_or_default()
-            .to_string(),
+        qrcode_key: key,
         url: v["data"]["url"].as_str().unwrap_or_default().to_string(),
     })
 }
@@ -163,19 +164,36 @@ pub async fn bilibili_qr_poll(
         .await?
         .json()
         .await?;
+    // 外层 code 非 0 = 平台级错误（如 -412 风控拦截），此时 data 为空，必须先判外层
+    let outer = v["code"].as_i64().unwrap_or(0);
+    if outer != 0 {
+        let msg = v["message"].as_str().unwrap_or("未知错误");
+        log::error!("bilibili poll outer code={outer}: {msg}");
+        return Err(AppError::Validation(format!(
+            "B站接口错误（code={outer}）: {msg}"
+        )));
+    }
     let code = v["data"]["code"].as_i64().unwrap_or(-1);
+    let api_msg = v["data"]["message"].as_str().map(str::to_string);
+    log::info!(
+        "bilibili poll code={code} msg={}",
+        api_msg.as_deref().unwrap_or("?")
+    );
     match code {
         86101 => Ok(QrPoll {
             status: "waiting".into(),
             uname: None,
+            message: api_msg,
         }),
         86090 => Ok(QrPoll {
             status: "scanned".into(),
             uname: None,
+            message: api_msg,
         }),
         86038 | 86017 => Ok(QrPoll {
             status: "expired".into(),
             uname: None,
+            message: api_msg,
         }),
         0 => {
             // 成功：回调 url 的 query 中携带 SESSDATA / bili_jct / DedeUserID
@@ -203,24 +221,54 @@ pub async fn bilibili_qr_poll(
                 dede_user_id,
                 uname: None,
             };
-            let (ok, uname, mid) = verify_login(&client, &creds).await?;
-            if !ok {
-                return Err(AppError::Validation("会话校验失败，请重试".into()));
-            }
-            if creds.dede_user_id.is_empty() {
-                if let Some(m) = mid {
-                    creds.dede_user_id = m.to_string();
-                }
-            }
-            creds.uname = Some(uname.clone());
+            // 关键：先落盘保存凭证——即使接下来校验请求遇网络抖动，也不丢失已到手的会话
             {
                 let conn = state.0.lock().unwrap();
                 save_creds(&conn, &creds)?;
             }
+            log::info!("bilibili login: credentials saved, verifying session…");
+            // 再校验会话并补全 uname/mid；网络失败≠登录失败（会话已存，放行）
+            let uname = match verify_login(&client, &creds).await {
+                Ok((true, uname, mid)) => {
+                    if creds.dede_user_id.is_empty() {
+                        if let Some(m) = mid {
+                            creds.dede_user_id = m.to_string();
+                        }
+                    }
+                    let uname = if uname.is_empty() {
+                        "B站用户".to_string()
+                    } else {
+                        uname
+                    };
+                    creds.uname = Some(uname.clone());
+                    let conn = state.0.lock().unwrap();
+                    save_creds(&conn, &creds)?;
+                    uname
+                }
+                Ok((false, _, _)) => {
+                    // API 可达但会话无效：凭证不可用，清掉并让用户重扫
+                    {
+                        let conn = state.0.lock().unwrap();
+                        let _ = conn.execute(
+                            "DELETE FROM credentials WHERE platform = ?1",
+                            rusqlite::params![PLATFORM],
+                        );
+                    }
+                    return Err(AppError::Validation(
+                        "会话校验失败（登录可能未生效），请重新扫码".into(),
+                    ));
+                }
+                Err(e) => {
+                    // 网络原因暂时无法校验：会话已保存，按成功放行
+                    log::warn!("verify_login 网络失败（会话已保留）: {e}");
+                    "B站用户".to_string()
+                }
+            };
             log::info!("bilibili login success: {uname}");
             Ok(QrPoll {
                 status: "success".into(),
                 uname: Some(uname),
+                message: api_msg,
             })
         }
         _ => Err(AppError::Validation(format!(

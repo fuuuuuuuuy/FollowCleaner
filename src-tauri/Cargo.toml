@@ -25,6 +25,7 @@ uuid = { version = "1", features = ["v4"] }
 chrono = "0.4"
 csv = "1"
 log = "0.4"
+env_logger = "0.11"
 reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json", "gzip"] }
 rand = "0.8"
 url = "2"
@@ -32,6 +33,10 @@ tokio = { version = "1", features = ["time"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+
+[dev-dependencies]
+# 仅用于 examples/tlstest.rs 网络诊断：验证应用同款 rustls 客户端能否连通平台 API
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 
 [profile.release]
 opt-level = 3

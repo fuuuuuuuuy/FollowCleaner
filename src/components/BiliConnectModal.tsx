@@ -23,9 +23,10 @@ export default function BiliConnectModal() {
 
   const [step, setStep] = useState(0);
   const [qrImg, setQrImg] = useState<string | null>(null);
-  const [pollState, setPollState] = useState<"waiting" | "scanned" | "expired">(
-    "waiting",
-  );
+  const [pollState, setPollState] = useState<
+    "waiting" | "scanned" | "expired" | "error"
+  >("waiting");
+  const [pollError, setPollError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [fetchStats, setFetchStats] = useState<{
     inserted: number;
@@ -80,20 +81,24 @@ export default function BiliConnectModal() {
   const startPolling = (key: string) => {
     stopPoll();
     let elapsed = 0;
+    let errStreak = 0; // 连续失败计数：网络问题不应被误报为"二维码过期"
     pollTimer.current = setInterval(async () => {
       elapsed += 2;
       if (elapsed > 180) {
-        // 3 分钟超时
+        // 二维码有效期约 3 分钟，超时提示刷新
         stopPoll();
         setPollState("expired");
+        setPollError("二维码有效期约 3 分钟，已超时");
         return;
       }
       try {
         const r = await api.biliQrPoll(key);
+        errStreak = 0;
         if (r.status === "scanned") setPollState("scanned");
         if (r.status === "expired") {
           stopPoll();
           setPollState("expired");
+          setPollError(r.message ?? "二维码已失效");
         }
         if (r.status === "success") {
           stopPoll();
@@ -103,8 +108,13 @@ export default function BiliConnectModal() {
           await doFetch();
         }
       } catch (e) {
-        // 网络抖动时继续轮询，不打断
-        console.warn("poll error", e);
+        errStreak += 1;
+        setPollError((e as Error).message);
+        if (errStreak >= 3) {
+          // 连续 3 次轮询失败：如实展示网络/接口错误，让用户重试
+          stopPoll();
+          setPollState("error");
+        }
       }
     }, 2000);
   };
@@ -229,7 +239,18 @@ export default function BiliConnectModal() {
                 </span>
               )}
               {pollState === "expired" && (
-                <span style={{ color: "#ff4d4f" }}>二维码已过期</span>
+                <span style={{ color: "#ff4d4f" }}>
+                  二维码已失效{pollError ? `（${pollError}）` : ""}，请刷新后重新扫码
+                </span>
+              )}
+              {pollState === "error" && (
+                <span style={{ color: "#ff4d4f", display: "block", maxWidth: 380, margin: "0 auto" }}>
+                  轮询失败：{pollError ?? "未知错误"}
+                  <br />
+                  <span style={{ fontSize: 12, color: "#8c8c8c" }}>
+                    多为网络波动或代理问题，可点击下方按钮重试
+                  </span>
+                </span>
               )}
             </div>
           </div>
